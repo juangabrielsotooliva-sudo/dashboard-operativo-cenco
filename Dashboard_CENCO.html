@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Operativo - Seguimiento y Plan de Desarrollo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row">
+
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-100 p-6 flex flex-col flex-shrink-0 justify-between">
+        <div class="space-y-6">
+            <!-- Logo / Identidad -->
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl tracking-wider shadow-sm">AO</div>
+                <h2 class="font-bold text-slate-900 tracking-tight text-xl leading-none">Operaciones</h2>
+            </div>
+
+            <!-- Menú de Navegación Dinámico -->
+            <nav class="space-y-1" id="sidebar-nav">
+                
+                <!-- Sección Última Semana -->
+                <div class="pb-2 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Última Semana</div>
+                <div id="team-buttons-latest"></div>
+
+                <!-- Sección Seguimiento Histórico -->
+                <div class="pb-2 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-t border-slate-100 pt-6 mt-4">Seguimiento Histórico</div>
+                <div id="team-buttons-historical"></div>
+
+                <!-- Sección Plan de Desarrollo / Formación -->
+                <div class="pb-2 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-t border-slate-100 pt-6 mt-4">Plan de Desarrollo</div>
+                <div id="team-buttons-pd"></div>
+
+            </nav>
+        </div>
+
+        <div class="pt-6 border-t border-slate-100 hidden md:block">
+            <p class="text-[11px] text-slate-400 font-medium">Dashboard Operativo © 2026</p>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto max-w-7xl mx-auto w-full flex flex-col justify-start">
+        
+        <!-- Encabezado y Fecha -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-6">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Registro de Actividades del Equipo</h1>
+                <p class="text-slate-500 mt-1">Seguimiento Operativo Semanal</p>
+            </div>
+            <div class="flex flex-col items-start sm:items-end gap-2 shrink-0">
+                <div class="text-left sm:text-right">
+                    <p id="fecha-1" class="font-bold text-slate-800 text-lg sm:text-base"></p>
+                    <p id="fecha-2" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
+                <a href="[ENLACE_RESERVADO_POR_CONFIDENCIALIDAD]" target="_blank" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl transition-colors shadow-sm mt-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    Ver Informe Completo
+                </a>
+            </div>
+        </header>
+
+        <!-- FILTROS GLOBALES (Visibles solo en la vista de Seguimiento Histórico) -->
+        <div id="filters-panel" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 transition-all hidden">
+            <div class="flex flex-col lg:flex-row gap-4 items-center">
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mr-2">Filtro de Datos:</p>
+                <div class="w-full lg:w-64">
+                    <select id="filter-semana" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors bg-slate-50 text-sm font-semibold text-slate-700 cursor-pointer">
+                        <option value="ALL">Histórico Completo (Acumulado)</option>
+                        <!-- Se llena vía JS -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VISTA 1: SEGUIMIENTO OPERATIVO -->
+        <!-- ========================================== -->
+        <div id="employee-view-container" class="space-y-6 w-full animate-fade-in transition-all dashboard-view">
+            <div class="flex items-center gap-4 border-b border-slate-200 pb-4 mb-2">
+                <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl shadow-sm" id="employee-avatar"></div>
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800" id="employee-name">Nombre</h2>
+                    <p class="text-sm text-slate-500 font-medium">Periodo de reporte: <span id="employee-week" class="text-slate-700 font-bold"></span></p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-10 items-center justify-start w-full">
+                <div class="relative w-48 h-48 rounded-full shrink-0 shadow-sm transition-transform hover:scale-105 duration-500 mx-auto md:mx-0" id="employee-pie-chart" style="background: conic-gradient(#e2e8f0 0% 100%);">
+                    <div class="absolute inset-0 m-auto w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                        <span class="text-3xl font-bold text-slate-800 tracking-tight" id="employee-total-hours">0</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Horas Invertidas</span>
+                    </div>
+                </div>
+                <div class="w-full md:flex-1 columns-1 sm:columns-2 gap-x-8" id="employee-legend"></div>
+            </div>
+
+            <div id="employee-tables-container" class="space-y-6 w-full"></div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VISTA 2: PLAN DE DESARROLLO / FORMACIÓN -->
+        <!-- ========================================== -->
+        <div id="pd-view-container" class="space-y-8 w-full animate-fade-in transition-all dashboard-view hidden">
+            <div class="flex items-center gap-4 border-b border-slate-200 pb-4 mb-2">
+                <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xl shadow-sm" id="pd-header-icon">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800" id="pd-header-title">Plan de Desarrollo</h2>
+                    <p class="text-sm text-slate-500 font-medium" id="pd-header-subtitle">Acumulado histórico de horas invertidas en la formación del equipo.</p>
+                </div>
+            </div>
+            <div id="pd-dynamic-content" class="space-y-8 w-full"></div>
+        </div>
+    </main>
+
+    <!-- Scripts de Lógica -->
+    <script>
+        const FECHA_ACTUALIZACION = "24 de agosto de 2026";
+        const LATEST_WEEK_VAL = "24/8/2026";
+        
+        const COLORES_CATEGORIA = {
+            "Gestión Operativa": "#0f7694",         
+            "Desarrollo Institucional": "#f97316",      
+            "Proyectos Internos": "#15803d",                 
+            "Soporte Gráfico": "#0ea5e9", 
+            "Docencia y Capacitación": "#a21caf",                  
+            "Procesos Administrativos": "#ef4444",       
+            "Plan de Desarrollo": "#64748b",        
+            "Ausencias y Feriados": "#fca5a5",
+            "Proyecto Tecnológico A": "#8b5cf6",
+            "Evento Corporativo": "#ec4899",
+            "Iniciativa Social": "#eab308"
+        };
+
+        const TODAS_LAS_CATEGORIAS = [
+            "Gestión Operativa",
+            "Desarrollo Institucional",
+            "Proyectos Internos",
+            "Soporte Gráfico",
+            "Docencia y Capacitación",
+            "Procesos Administrativos",
+            "Plan de Desarrollo",
+            "Ausencias y Feriados",
+            "Proyecto Tecnológico A",
+            "Evento Corporativo",
+            "Iniciativa Social"
+        ];
+
+        const CERTIFICACIONES_EQUIPO = {
+            "Colaborador B": [
+                { name: "Certificación Técnica A", target: 40, preCompleted: false },
+                { name: "Certificación de Seguridad Básica", target: 40, preCompleted: false }
+            ],
+            "Colaborador A": [
+                { name: "Certificación de Seguridad Básica", target: 40, preCompleted: true },
+                { name: "Certificación Técnica Avanzada", target: 90, preCompleted: false }
+            ],
+            "Colaborador C": [
+                { name: "Curso de IA Generativa", target: 40, preCompleted: true },
+                { name: "Taller de Innovación", target: 25, preCompleted: true },
+                { name: "Curso de Análisis de Datos", target: 30, preCompleted: false }
+            ],
+            "Colaborador D": [
+                { name: "Certificación de Seguridad Básica", target: 40, preCompleted: false }
+            ]
+        };
+
+        const database = [
+            // --- SEMANA 11/5/2026 ---
+            { semana: "11/5/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 3, M: 3.5, X: 3.5, J: 3.5, V: 0, total: 13.5 },
+            { semana: "11/5/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 1.5, V: 0, total: 2 },
+            { semana: "11/5/2026", miembro: "Colaborador A", categoria: "Docencia y Capacitación", L: 6, M: 4.5, X: 5, J: 4, V: 8, total: 27.5 },
+            { semana: "11/5/2026", miembro: "Colaborador A", categoria: "Plan de Desarrollo", L: 0, M: 1, X: 0, J: 0, V: 0, total: 1 },
+            { semana: "11/5/2026", miembro: "Colaborador A", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 1, total: 1 },
+
+            { semana: "11/5/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 5, M: 0, X: 2, J: 3.5, V: 3, total: 13.5 },
+            { semana: "11/5/2026", miembro: "Colaborador C", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 0, V: 0, total: 0.5 },
+            { semana: "11/5/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 0, X: 2.5, J: 1.5, V: 2, total: 6 },
+            { semana: "11/5/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 5, X: 0, J: 0, V: 0, total: 5 },
+
+            { semana: "11/5/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 0, X: 4, J: 0.5, V: 0.5, total: 7 },
+            { semana: "11/5/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0.5, M: 0, X: 0, J: 0, V: 2, total: 2.5 },
+            { semana: "11/5/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 6.5, M: 9, X: 4.5, J: 8.5, V: 2.5, total: 31 },
+            { semana: "11/5/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 0, M: 0, X: 0, J: 0, V: 3, total: 3 },
+
+            { semana: "11/5/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 7, X: 2.5, J: 9, V: 9, total: 36.5 },
+            { semana: "11/5/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 0, V: 0, total: 0.5 },
+            { semana: "11/5/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 2, X: 6, J: 0, V: 0, total: 8 },
+
+            // --- SEMANA 18/5/2026 ---
+            { semana: "18/5/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 4, M: 9, X: 9, J: 9, V: 8, total: 39 },
+            { semana: "18/5/2026", miembro: "Colaborador A", categoria: "Docencia y Capacitación", L: 5, M: 0, X: 0, J: 0, V: 0, total: 5 },
+
+            { semana: "18/5/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 5, M: 9, X: 5.5, J: 9, V: 5, total: 33.5 },
+            { semana: "18/5/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 2, M: 0, X: 0, J: 0, V: 0, total: 2 },
+            { semana: "18/5/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 1, J: 0, V: 3, total: 4 },
+            { semana: "18/5/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 2, M: 0, X: 0, J: 0, V: 0, total: 2 },
+            { semana: "18/5/2026", miembro: "Colaborador D", categoria: "Plan de Desarrollo", L: 0, M: 0, X: 2.5, J: 0, V: 0, total: 2.5 },
+
+            { semana: "18/5/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 5.5, M: 6.5, X: 5, J: 5.5, V: 0, total: 22.5 },
+            { semana: "18/5/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 5, total: 5 },
+
+            { semana: "18/5/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 4, M: 0, X: 1.5, J: 1, V: 1.5, total: 8 },
+            { semana: "18/5/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 0.5, V: 0, total: 0.5 },
+            { semana: "18/5/2026", miembro: "Colaborador B", categoria: "Proyectos Internos", L: 4, M: 8, X: 5.5, J: 0, V: 0, total: 17.5 },
+            { semana: "18/5/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 7.5, V: 5.5, total: 13 },
+            { semana: "18/5/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 1, M: 1, X: 2, J: 0, V: 1, total: 5 },
+
+            // --- SEMANA 25/5/2026 ---
+            { semana: "25/5/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 9, M: 9, X: 8.5, J: 9, V: 6.5, total: 42 },
+            { semana: "25/5/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 0, V: 1.5, total: 2 },
+            
+            { semana: "25/5/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 6, X: 8.5, J: 9, V: 8, total: 40.5 },
+            { semana: "25/5/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 0, V: 0, total: 0.5 },
+            { semana: "25/5/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 3, X: 0, J: 0, V: 0, total: 3 },
+            
+            { semana: "25/5/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 5, M: 5, X: 2.5, J: 5, V: 3, total: 20.5 },
+            { semana: "25/5/2026", miembro: "Colaborador C", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0.5, J: 0, V: 0, total: 0.5 },
+            { semana: "25/5/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 0, X: 2, J: 0, V: 2, total: 4 },
+            
+            { semana: "25/5/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 2, X: 1.5, J: 0, V: 2, total: 7.5 },
+            { semana: "25/5/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0.5, X: 0.5, J: 0, V: 0, total: 1 },
+            { semana: "25/5/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 7, M: 6.5, X: 5, J: 7, V: 6, total: 31.5 },
+            { semana: "25/5/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 0, M: 0, X: 2, J: 2, V: 0, total: 4 },
+
+            // --- SEMANA 1/6/2026 ---
+            { semana: "1/6/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 9, M: 9, X: 7.5, J: 8, V: 8, total: 41.5 },
+            { semana: "1/6/2026", miembro: "Colaborador A", categoria: "Proyectos Internos", L: 0, M: 0, X: 1.5, J: 1, V: 0, total: 2.5 },
+            
+            { semana: "1/6/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 3, M: 5, X: 5, J: 4, V: 4, total: 21 },
+            { semana: "1/6/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 2, M: 0, X: 0, J: 1, V: 1, total: 4 },
+            
+            { semana: "1/6/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 1, X: 0, J: 2, V: 1, total: 6 },
+            { semana: "1/6/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 0.5, V: 0, total: 0.5 },
+            { semana: "1/6/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 6, M: 6, X: 8, J: 5, V: 6, total: 31 },
+            { semana: "1/6/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 1, M: 1, X: 1, J: 1.5, V: 1, total: 5.5 },
+            { semana: "1/6/2026", miembro: "Colaborador B", categoria: "Ausencias y Feriados", L: 0, M: 1, X: 0, J: 0, V: 0, total: 1 },
+            
+            { semana: "1/6/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 9, X: 6, J: 4, V: 7, total: 35 },
+            { semana: "1/6/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 0, V: 1, total: 1 },
+            { semana: "1/6/2026", miembro: "Colaborador D", categoria: "Proyectos Internos", L: 0, M: 0, X: 3, J: 0, V: 0, total: 3 },
+            { semana: "1/6/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 0, J: 5, V: 0, total: 5 },
+
+            // --- SEMANA 8/6/2026 ---
+            { semana: "8/6/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 0, M: 4.3, X: 4, J: 5, V: 4, total: 17.3 },
+            { semana: "8/6/2026", miembro: "Colaborador C", categoria: "Desarrollo Institucional", L: 0, M: 0.7, X: 0, J: 0, V: 0, total: 0.7 },
+            { semana: "8/6/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 0, X: 1, J: 0, V: 1, total: 2 },
+            { semana: "8/6/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 5, M: 0, X: 0, J: 0, V: 0, total: 5 },
+
+            { semana: "8/6/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 1.5, X: 1, J: 1, V: 1, total: 6.5 },
+            { semana: "8/6/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 2, M: 1, X: 3, J: 2.5, V: 1, total: 9.5 },
+            { semana: "8/6/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 5, M: 6.5, X: 5, J: 5.5, V: 6, total: 28 },
+
+            { semana: "8/6/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 8, M: 9, X: 1, J: 1, V: 1, total: 20 },
+            { semana: "8/6/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 1, M: 0, X: 0, J: 0, V: 0, total: 1 },
+            { semana: "8/6/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 8, J: 8, V: 0, total: 16 },
+            { semana: "8/6/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 0, V: 7, total: 7 },
+
+            { semana: "8/6/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 7, M: 5.5, X: 9, J: 5, V: 0, total: 26.5 },
+            { semana: "8/6/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 1, X: 0, J: 0, V: 0, total: 2 },
+            { semana: "8/6/2026", miembro: "Colaborador A", categoria: "Proyectos Internos", L: 1, M: 2.5, X: 0, J: 4, V: 0, total: 7.5 },
+            { semana: "8/6/2026", miembro: "Colaborador A", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 8, total: 8 },
+
+            // --- SEMANA 15/6/2026 ---
+            { semana: "15/6/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 7, M: 3, X: 7, J: 5.5, V: 5, total: 27.5 },
+            { semana: "15/6/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 2, M: 3, X: 0, J: 0, V: 0, total: 5 },
+            { semana: "15/6/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 0, M: 3, X: 2, J: 3.5, V: 3, total: 11.5 },
+            
+            { semana: "15/6/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 5, M: 5.5, X: 5, J: 5, V: 1.5, total: 22 },
+            { semana: "15/6/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 0, X: 1.5, J: 0, V: 0, total: 1.5 },
+            { semana: "15/6/2026", miembro: "Colaborador C", categoria: "Procesos Administrativos", L: 1, M: 0, X: 0, J: 0, V: 0, total: 1 },
+            { semana: "15/6/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 3.5, total: 3.5 },
+            
+            { semana: "15/6/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 1, X: 2, J: 2.5, V: 3.5, total: 11 },
+            { semana: "15/6/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 1, M: 0, X: 2, J: 0, V: 0, total: 3 },
+            { semana: "15/6/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 6, M: 8, X: 5, J: 6.5, V: 4.5, total: 30 },
+            
+            { semana: "15/6/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 5, X: 3, J: 1.5, V: 1, total: 19.5 },
+            { semana: "15/6/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 1, V: 0, total: 1 },
+            { semana: "15/6/2026", miembro: "Colaborador D", categoria: "Proyectos Internos", L: 0, M: 0, X: 0, J: 0, V: 4, total: 4 },
+            { semana: "15/6/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 4, X: 6, J: 6.5, V: 0, total: 16.5 },
+            { semana: "15/6/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 0, V: 4, total: 4 },
+
+            // --- SEMANA 22/6/2026 ---
+            { semana: "22/6/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 5, M: 4, X: 5.5, J: 8, V: 8, total: 30.5 },
+            { semana: "22/6/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 1, X: 0.5, J: 1, V: 0, total: 3.5 },
+            { semana: "22/6/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 3, M: 4, X: 3, J: 0, V: 0, total: 10 },
+
+            { semana: "22/6/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 3.7, M: 5, X: 5, J: 3, V: 0, total: 16.7 },
+            { semana: "22/6/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 1.5, M: 0, X: 0, J: 2, V: 0, total: 3.5 },
+            { semana: "22/6/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 5, total: 5 },
+
+            { semana: "22/6/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 3, M: 3.5, X: 1.5, J: 2.5, V: 2.5, total: 13 },
+            { semana: "22/6/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0.5, X: 1, J: 0, V: 0, total: 1.5 },
+            { semana: "22/6/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 6, M: 5, X: 6.5, J: 6.5, V: 5.5, total: 29.5 },
+
+            { semana: "22/6/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 9, X: 2, J: 2, V: 8, total: 30 },
+            { semana: "22/6/2026", miembro: "Colaborador D", categoria: "Proyectos Internos", L: 0, M: 0, X: 0, J: 7, V: 0, total: 7 },
+            { semana: "22/6/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 7, J: 0, V: 0, total: 7 },
+
+            // --- SEMANA 29/6/2026 ---
+            { semana: "29/6/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 5, M: 6, X: 5, J: 6, V: 5.5, total: 27.5 },
+            { semana: "29/6/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 0, M: 1, X: 1, J: 1, V: 0, total: 3 },
+            { semana: "29/6/2026", miembro: "Colaborador A", categoria: "Proyectos Internos", L: 0, M: 2, X: 0, J: 0, V: 0, total: 2 },
+            { semana: "29/6/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 4, M: 0, X: 3, J: 0, V: 0, total: 7 },
+            { semana: "29/6/2026", miembro: "Colaborador A", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 2, V: 3, total: 5 },
+
+            { semana: "29/6/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2.5, M: 4, X: 0.5, J: 2, V: 1.5, total: 10.5 },
+            { semana: "29/6/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 1, M: 0.5, X: 1, J: 0.5, V: 1.5, total: 4.5 },
+            { semana: "29/6/2026", miembro: "Colaborador B", categoria: "Soporte Gráfico", L: 0, M: 1, X: 0, J: 0, V: 0, total: 1 },
+            { semana: "29/6/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 5.5, M: 3.5, X: 7.5, J: 6.5, V: 5, total: 28 },
+
+            { semana: "29/6/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 0, M: 4, X: 4, J: 1.5, V: 5, total: 14.5 },
+            { semana: "29/6/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 1, X: 1, J: 3.5, V: 0, total: 5.5 },
+            { semana: "29/6/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 5, M: 0, X: 0, J: 0, V: 0, total: 5 },
+
+            { semana: "29/6/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 0, M: 5.5, X: 5.5, J: 5.5, V: 4.5, total: 21 },
+            { semana: "29/6/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 3.5, X: 3.5, J: 3.5, V: 3.5, total: 14 },
+            { semana: "29/6/2026", miembro: "Colaborador D", categoria: "Ausencias y Feriados", L: 9, M: 0, X: 0, J: 0, V: 0, total: 9 },
+
+            // --- SEMANA 6/7/2026 ---
+            { semana: "6/7/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 8, M: 8, X: 8, J: 9, V: 9, total: 42 },
+            { semana: "6/7/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 1, X: 1, J: 0, V: 0, total: 3 },
+
+            { semana: "6/7/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 0.5, M: 1.5, X: 1, J: 1.5, V: 1, total: 5.5 },
+            { semana: "6/7/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 5, M: 1, X: 3.5, J: 4, V: 0, total: 13.5 },
+            { semana: "6/7/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 3.5, M: 6.5, X: 4.5, J: 3.5, V: 7, total: 25 },
+
+            { semana: "6/7/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 5, M: 5, X: 5, J: 4, V: 2, total: 21 },
+            { semana: "6/7/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 0, X: 0, J: 0, V: 3, total: 3 },
+            { semana: "6/7/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 1, V: 0, total: 1 },
+
+            { semana: "6/7/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 8, M: 5, X: 5, J: 5, V: 4, total: 27 },
+            { semana: "6/7/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 1, M: 2, X: 0, J: 0, V: 0, total: 3 },
+            { semana: "6/7/2026", miembro: "Colaborador D", categoria: "Proyectos Internos", L: 0, M: 0, X: 2, J: 0, V: 0, total: 2 },
+            { semana: "6/7/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 2, X: 2, J: 0, V: 0, total: 4 },
+            { semana: "6/7/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 4, V: 4, total: 8 },
+
+            // --- SEMANA 13/7/2026 ---
+            { semana: "13/7/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 7, M: 5.5, X: 8, J: 6.5, V: 1, total: 28 },
+            { semana: "13/7/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 0.5, X: 1, J: 0, V: 0, total: 2.5 },
+            { semana: "13/7/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 1, M: 3, X: 0, J: 2.5, V: 7, total: 13.5 },
+
+            { semana: "13/7/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 1, M: 2.5, X: 1.5, J: 1, V: 0, total: 6 },
+            { semana: "13/7/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 4, M: 0, X: 2, J: 0, V: 0, total: 6 },
+            { semana: "13/7/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 4, M: 6.5, X: 5.5, J: 8, V: 0, total: 24 },
+            { semana: "13/7/2026", miembro: "Colaborador B", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 8, total: 8 },
+
+            { semana: "13/7/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 3, M: 0.5, X: 4.5, J: 4, V: 2, total: 14 },
+            { semana: "13/7/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 2, M: 1, X: 0.5, J: 1, V: 3, total: 7.5 },
+            { semana: "13/7/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 3.5, X: 0, J: 0, V: 0, total: 3.5 },
+
+            { semana: "13/7/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 3, M: 4, X: 4, J: 7, V: 1, total: 19 },
+            { semana: "13/7/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 6, M: 5, X: 4, J: 2, V: 7, total: 24 },
+            { semana: "13/7/2026", miembro: "Colaborador D", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 1, J: 0, V: 0, total: 1 },
+
+            // --- SEMANA 20/7/2026 ---
+            { semana: "20/7/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 5, M: 5, X: 7, J: 3, V: 0, total: 20 },
+            { semana: "20/7/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 0, X: 2, J: 0, V: 0, total: 3 },
+            { semana: "20/7/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 3, M: 4, X: 0, J: 6, V: 0, total: 13 },
+            { semana: "20/7/2026", miembro: "Colaborador A", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 0, V: 8, total: 8 },
+
+            { semana: "20/7/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 0, M: 5, X: 2, J: 2, V: 2, total: 11 },
+            { semana: "20/7/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 2, J: 4, V: 0, total: 6 },
+            { semana: "20/7/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 0, M: 4, X: 5, J: 3, V: 6, total: 18 },
+            { semana: "20/7/2026", miembro: "Colaborador B", categoria: "Ausencias y Feriados", L: 9, M: 0, X: 0, J: 0, V: 0, total: 9 },
+
+            { semana: "20/7/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 3, M: 5, X: 1.5, J: 3.5, V: 5, total: 18 },
+            { semana: "20/7/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 2, M: 0, X: 3.5, J: 0.5, V: 0, total: 6 },
+            { semana: "20/7/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 0, J: 1, V: 0, total: 1 },
+
+            { semana: "20/7/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 7, M: 7, X: 1, J: 8, V: 8, total: 31 },
+            { semana: "20/7/2026", miembro: "Colaborador D", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 1, V: 0, total: 1 },
+            { semana: "20/7/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 8, J: 0, V: 0, total: 8 },
+            { semana: "20/7/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 2, M: 2, X: 0, J: 0, V: 0, total: 4 },
+
+            // --- SEMANA 27/7/2026 ---
+            { semana: "27/7/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 3.5, M: 7.5, X: 8, J: 9, V: 7.5, total: 35.5 },
+            { semana: "27/7/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 0, X: 1, J: 0, V: 0.5, total: 2.5 },
+            { semana: "27/7/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 4.5, M: 1.5, X: 0, J: 0, V: 0, total: 6 },
+
+            { semana: "27/7/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 1, M: 2.5, X: 1, J: 0.5, V: 1.5, total: 6.5 },
+            { semana: "27/7/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 4, M: 1, X: 2, J: 4, V: 0, total: 11 },
+            { semana: "27/7/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 4, M: 5.5, X: 6, J: 4.5, V: 6.5, total: 26.5 },
+
+            { semana: "27/7/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 4, M: 2, X: 0, J: 4, V: 2, total: 12 },
+            { semana: "27/7/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 1, M: 3, X: 0, J: 1, V: 3, total: 8 },
+            { semana: "27/7/2026", miembro: "Colaborador C", categoria: "Ausencias y Feriados", L: 0, M: 0, X: 5, J: 0, V: 0, total: 5 },
+
+            { semana: "27/7/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 7.5, X: 3, J: 3, V: 3, total: 25.5 },
+            { semana: "27/7/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 1.5, X: 6, J: 6, V: 3, total: 16.5 },
+            { semana: "27/7/2026", miembro: "Colaborador D", categoria: "Plan de Desarrollo", L: 0, M: 0, X: 0, J: 0, V: 2, total: 2 },
+
+            // --- SEMANA 3/8/2026 ---
+            { semana: "3/8/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 8, M: 8, X: 6, J: 8, V: 7.5, total: 37.5 },
+            { semana: "3/8/2026", miembro: "Colaborador A", categoria: "Desarrollo Institucional", L: 1, M: 0, X: 0, J: 0, V: 0, total: 1 },
+            { semana: "3/8/2026", miembro: "Colaborador A", categoria: "Soporte Gráfico", L: 0, M: 0, X: 2, J: 1, V: 0, total: 3 },
+            { semana: "3/8/2026", miembro: "Colaborador A", categoria: "Plan de Desarrollo", L: 0, M: 1, X: 1, J: 0, V: 0.5, total: 2.5 },
+
+            { semana: "3/8/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 2, M: 3, X: 1, J: 3, V: 2.5, total: 11.5 },
+            { semana: "3/8/2026", miembro: "Colaborador B", categoria: "Desarrollo Institucional", L: 0, M: 0.5, X: 1, J: 1.5, V: 0, total: 3 },
+            { semana: "3/8/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 7, M: 5.5, X: 7, J: 4.5, V: 5.5, total: 29.5 },
+
+            { semana: "3/8/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 4, M: 4, X: 2, J: 4.5, V: 2.5, total: 17 },
+            { semana: "3/8/2026", miembro: "Colaborador C", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 0.5, V: 0, total: 0.5 },
+            { semana: "3/8/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 0, M: 1, X: 3, J: 0, V: 1, total: 5 },
+            { semana: "3/8/2026", miembro: "Colaborador C", categoria: "Procesos Administrativos", L: 1, M: 0, X: 0, J: 0, V: 1.5, total: 2.5 },
+
+            { semana: "3/8/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 7, M: 8, X: 1, J: 8.5, V: 6, total: 30.5 },
+            { semana: "3/8/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 1, X: 2, J: 0.5, V: 3, total: 6.5 },
+            { semana: "3/8/2026", miembro: "Colaborador D", categoria: "Docencia y Capacitación", L: 2, M: 0, X: 6, J: 0, V: 0, total: 8 },
+
+            // --- SEMANA 10/8/2026 ---
+            { semana: "10/8/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 8, M: 9, X: 9, J: 7, V: 7, total: 40 },
+            { semana: "10/8/2026", miembro: "Colaborador A", categoria: "Plan de Desarrollo", L: 1, M: 0, X: 0, J: 2, V: 1, total: 4 },
+
+            { semana: "10/8/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 4, M: 3, X: 3.5, J: 3.5, V: 3.5, total: 17.5 },
+            { semana: "10/8/2026", miembro: "Colaborador B", categoria: "Soporte Gráfico", L: 1, M: 1, X: 1, J: 0, V: 0, total: 3 },
+            { semana: "10/8/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 4, M: 4, X: 4.5, J: 5.5, V: 3.5, total: 21.5 },
+            { semana: "10/8/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 0, M: 1, X: 0, J: 0, V: 1, total: 2 },
+
+            { semana: "10/8/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 3, M: 5, X: 5, J: 5, V: 4, total: 22 },
+            { semana: "10/8/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 2, M: 0, X: 0, J: 0, V: 1, total: 3 },
+
+            { semana: "10/8/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 6, M: 5, X: 9, J: 0, V: 6, total: 26 },
+            { semana: "10/8/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 3, M: 3, X: 0, J: 5, V: 2, total: 13 },
+            { semana: "10/8/2026", miembro: "Colaborador D", categoria: "Plan de Desarrollo", L: 0, M: 0, X: 0, J: 4, V: 0, total: 4 },
+
+            // --- SEMANA 17/8/2026 ---
+            { semana: "17/8/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 8, M: 7, X: 7, J: 4, V: 8, total: 34 },
+            { semana: "17/8/2026", miembro: "Colaborador A", categoria: "Docencia y Capacitación", L: 0, M: 0, X: 0, J: 3, V: 0, total: 3 },
+            { semana: "17/8/2026", miembro: "Colaborador A", categoria: "Plan de Desarrollo", L: 1, M: 2, X: 2, J: 2, V: 0, total: 7 },
+
+            { semana: "17/8/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 1.5, M: 2.5, X: 1, J: 0.5, V: 1.5, total: 7 },
+            { semana: "17/8/2026", miembro: "Colaborador B", categoria: "Soporte Gráfico", L: 0, M: 0, X: 0, J: 0, V: 0.5, total: 0.5 },
+            { semana: "17/8/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 6, M: 5, X: 6.5, J: 6.5, V: 6, total: 30 },
+            { semana: "17/8/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 1.5, M: 1.5, X: 1.5, J: 2, V: 0, total: 6.5 },
+
+            { semana: "17/8/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 2, M: 1.3, X: 1.5, J: 0, V: 3, total: 7.8 },
+            { semana: "17/8/2026", miembro: "Colaborador C", categoria: "Desarrollo Institucional", L: 0, M: 0, X: 0, J: 0, V: 1, total: 1 },
+            { semana: "17/8/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 3, M: 3.7, X: 2.5, J: 5, V: 0, total: 14.2 },
+            { semana: "17/8/2026", miembro: "Colaborador C", categoria: "Soporte Gráfico", L: 0, M: 0, X: 1, J: 0, V: 0, total: 1 },
+            { semana: "17/8/2026", miembro: "Colaborador C", categoria: "Procesos Administrativos", L: 0, M: 0, X: 0, J: 0, V: 1, total: 1 },
+
+            { semana: "17/8/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 7, M: 6, X: 9, J: 8, V: 8, total: 38 },
+            { semana: "17/8/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 2, M: 0, X: 0, J: 1, V: 1, total: 4 },
+            { semana: "17/8/2026", miembro: "Colaborador D", categoria: "Plan de Desarrollo", L: 0, M: 3, X: 0, J: 0, V: 0, total: 3 },
+
+            // --- SEMANA 24/8/2026 ---
+            { semana: "24/8/2026", miembro: "Colaborador A", categoria: "Gestión Operativa", L: 4.5, M: 2.5, X: 2, J: 2.5, V: 2, total: 13.5 },
+            { semana: "24/8/2026", miembro: "Colaborador A", categoria: "Docencia y Capacitación", L: 3.5, M: 3, X: 0, J: 0, V: 0, total: 6.5 },
+            { semana: "24/8/2026", miembro: "Colaborador A", categoria: "Plan de Desarrollo", L: 1, M: 1, X: 1, J: 0.5, V: 1, total: 4.5 },
+            { semana: "24/8/2026", miembro: "Colaborador A", categoria: "Proyecto Tecnológico A", L: 0, M: 2.5, X: 6, J: 6, V: 5, total: 19.5 },
+
+            { semana: "24/8/2026", miembro: "Colaborador B", categoria: "Gestión Operativa", L: 3, M: 2, X: 1.5, J: 1, V: 1, total: 8.5 },
+            { semana: "24/8/2026", miembro: "Colaborador B", categoria: "Soporte Gráfico", L: 1.5, M: 0, X: 0, J: 0, V: 0, total: 1.5 },
+            { semana: "24/8/2026", miembro: "Colaborador B", categoria: "Docencia y Capacitación", L: 4.5, M: 6, X: 6.5, J: 7, V: 5.5, total: 29.5 },
+            { semana: "24/8/2026", miembro: "Colaborador B", categoria: "Plan de Desarrollo", L: 0, M: 1, X: 1, J: 1, V: 1, total: 4 },
+            { semana: "24/8/2026", miembro: "Colaborador B", categoria: "Iniciativa Social", L: 0, M: 0, X: 0, J: 0, V: 0.5, total: 0.5 },
+
+            { semana: "24/8/2026", miembro: "Colaborador C", categoria: "Gestión Operativa", L: 4, M: 0.5, X: 0.7, J: 1.8, V: 2, total: 9 },
+            { semana: "24/8/2026", miembro: "Colaborador C", categoria: "Proyectos Internos", L: 1, M: 2.5, X: 3.5, J: 3, V: 3, total: 13 },
+            { semana: "24/8/2026", miembro: "Colaborador C", categoria: "Procesos Administrativos", L: 0, M: 1, X: 1, J: 0, V: 0, total: 2 },
+            { semana: "24/8/2026", miembro: "Colaborador C", categoria: "Evento Corporativo", L: 0, M: 1, X: 0, J: 0, V: 0, total: 1 },
+
+            { semana: "24/8/2026", miembro: "Colaborador D", categoria: "Gestión Operativa", L: 9, M: 9, X: 9, J: 6, V: 5, total: 38 },
+            { semana: "24/8/2026", miembro: "Colaborador D", categoria: "Soporte Gráfico", L: 0, M: 0, X: 0, J: 3, V: 3, total: 6 }
+        ];
+
+        let currentMode = 'latest'; // 'latest', 'hist', 'pd'
+        let currentActiveMember = 'ALL';
+
+        // Lógica de Ordenamiento Dinámico
+        let sortState = {
+            monthly: { key: 'total', dir: 'desc' },
+            weekly: { key: 'total', dir: 'desc' }
+        };
+
+        window.handleSort = (tableType, key) => {
+            if (sortState[tableType].key === key) {
+                sortState[tableType].dir = sortState[tableType].dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState[tableType].key = key;
+                sortState[tableType].dir = 'desc';
+            }
+            renderEmployeeData(currentMode, currentActiveMember, false);
+        };
+
+        const getSortIcon = (tableType, key) => {
+            let conf = sortState[tableType];
+            let color = conf.key === key ? 'text-blue-600' : 'text-slate-300 opacity-50';
+            let path = '';
+            if (conf.key === key && conf.dir === 'asc') {
+                path = 'M5 15l7-7 7 7'; // Up arrow
+            } else if (conf.key === key && conf.dir === 'desc') {
+                path = 'M19 9l-7 7-7-7'; // Down arrow
+            } else {
+                path = 'M8 9l4-4 4 4m0 6l-4 4-4-4'; // Double arrow default
+            }
+            return `<svg class="w-3 h-3 inline-block ml-1 ${color}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${path}"></path></svg>`;
+        };
+
+        const renderSortableTh = (label, key, tableType, widthCls = '', alignCls = 'text-center', colorCls = 'text-slate-500') => {
+            return `<th class="px-3 py-4 ${widthCls} ${alignCls} ${colorCls} cursor-pointer hover:bg-slate-100 transition-colors" onclick="handleSort('${tableType}', '${key}')">
+                <div class="flex items-center ${alignCls === 'text-center' ? 'justify-center' : 'justify-start'} select-none">
+                    ${label} ${getSortIcon(tableType, key)}
+                </div>
+            </th>`;
+        };
+
+        const renderDate = () => {
+            const today = new Date();
+            const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+            const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+            
+            const dayName = days[today.getDay()];
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = months[today.getMonth()];
+            const year = today.getFullYear();
+
+            document.getElementById('fecha-1').innerText = `${dayName}, ${day} de ${month} de ${year}`;
+            document.getElementById('fecha-2').innerText = `Actualización: ${FECHA_ACTUALIZACION}`;
+        };
+
+        const createTeamButtons = (containerId, prefixMode) => {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            container.innerHTML = ''; 
+            
+            const btnResumen = document.createElement('button');
+            btnResumen.id = `btn-${prefixMode}-ALL`;
+            btnResumen.onclick = () => switchMode(prefixMode, 'ALL');
+            btnResumen.className = "nav-btn w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left mb-1";
+            
+            let titleSummary = prefixMode === 'pd' ? 'Resumen Formación' : 'Resumen del Equipo';
+            let iconSummary = prefixMode === 'pd' 
+                ? `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`
+                : `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+            
+            btnResumen.innerHTML = `${iconSummary} <span>${titleSummary}</span>`;
+            container.appendChild(btnResumen);
+
+            const miembros = [...new Set(database.map(d => d.miembro))].sort();
+            miembros.forEach(m => {
+                const btn = document.createElement('button');
+                btn.id = `btn-${prefixMode}-${m.replace(/\s+/g, '-')}`;
+                btn.onclick = () => switchMode(prefixMode, m);
+                btn.className = "nav-btn w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left mb-1";
+                const iconHTML = `<svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                btn.innerHTML = `${iconHTML} <span>${m}</span>`;
+                container.appendChild(btn);
+            });
+        };
+
+        const initFiltersAndSidebar = () => {
+            const semSelect = document.getElementById('filter-semana');
+            const semanas = [...new Set(database.map(d => d.semana))];
+            
+            semanas.sort((a,b) => {
+                let pa = a.split('/'); let pb = b.split('/');
+                return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+            });
+
+            semanas.forEach(s => semSelect.innerHTML += `<option value="${s}">Semana ${s}</option>`);
+
+            createTeamButtons('team-buttons-latest', 'latest');
+            createTeamButtons('team-buttons-historical', 'hist');
+            createTeamButtons('team-buttons-pd', 'pd');
+        };
+
+        const renderEmployeeData = (mode, miembroID, animate = true) => {
+            const isSummary = (miembroID === 'ALL');
+            let selectedWeek = 'ALL';
+            
+            if (mode === 'latest') {
+                selectedWeek = LATEST_WEEK_VAL;
+            } else if (mode === 'hist') {
+                selectedWeek = document.getElementById('filter-semana').value;
+            }
+            
+            let dataRaw = database;
+            if (!isSummary) dataRaw = dataRaw.filter(d => d.miembro === miembroID);
+            if (selectedWeek !== 'ALL') dataRaw = dataRaw.filter(d => d.semana === selectedWeek);
+            
+            document.getElementById('employee-name').innerText = isSummary ? "Resumen del Equipo" : miembroID;
+            document.getElementById('employee-avatar').innerHTML = isSummary 
+                ? `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>` 
+                : miembroID.charAt(0).toUpperCase();
+            
+            let strWeek = '';
+            if (mode === 'latest') {
+                strWeek = `Última Semana (${selectedWeek})`;
+            } else {
+                strWeek = selectedWeek === 'ALL' ? 'Histórico Completo' : `Semana ${selectedWeek}`;
+            }
+            document.getElementById('employee-week').innerText = strWeek;
+
+            // Determinar qué tablas mostrar
+            let showMonthly = false;
+            let showWeekly = true;
+
+            if (mode === 'hist' && selectedWeek === 'ALL') {
+                showMonthly = true;
+                if (isSummary) {
+                    showWeekly = false; 
+                }
+            }
+
+            // Datos para el gráfico circular general
+            let catAggGlobal = {};
+            TODAS_LAS_CATEGORIAS.forEach(c => { catAggGlobal[c] = { categoria: c, total: 0 }; });
+            dataRaw.forEach(d => {
+                if (!catAggGlobal[d.categoria]) catAggGlobal[d.categoria] = { categoria: d.categoria, total: 0 };
+                catAggGlobal[d.categoria].total += d.total;
+            });
+            let totalHorasChart = 0;
+            Object.values(catAggGlobal).forEach(d => totalHorasChart += d.total);
+            
+            document.getElementById('employee-total-hours').innerText = Math.round(totalHorasChart);
+
+            const legend = document.getElementById('employee-legend');
+            legend.innerHTML = '';
+            let conicStops = [];
+            let currentDegree = 0;
+
+            let dataForChart = Object.values(catAggGlobal).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+
+            if(totalHorasChart === 0) {
+                document.getElementById('employee-pie-chart').style.background = `conic-gradient(#f1f5f9 0% 100%)`;
+                legend.innerHTML = '<p class="text-slate-400 text-sm">No hay datos en el filtro actual.</p>';
+            } else {
+                dataForChart.forEach((d) => {
+                    const percentage = (d.total / totalHorasChart) * 100;
+                    const nextDegree = currentDegree + percentage;
+                    const color = COLORES_CATEGORIA[d.categoria] || '#94a3b8';
+                    
+                    conicStops.push(`${color} ${currentDegree}% ${nextDegree}%`);
+                    currentDegree = nextDegree;
+
+                    legend.innerHTML += `
+                        <div class="flex items-start justify-between text-sm w-full break-inside-avoid mb-3 gap-2">
+                            <div class="flex items-start gap-2 overflow-hidden flex-1">
+                                <span class="w-3 h-3 rounded-full shrink-0 shadow-sm mt-1" style="background-color: ${color};"></span>
+                                <span class="text-slate-600 font-medium leading-tight break-words" title="${d.categoria}">${d.categoria}</span>
+                            </div>
+                            <div class="font-bold text-slate-800 shrink-0 text-right">
+                                ${d.total}h <span class="text-slate-400 font-medium text-[11px] ml-0.5 inline-block w-8">(${percentage.toFixed(0)}%)</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('employee-pie-chart').style.background = `conic-gradient(${conicStops.join(', ')})`;
+            }
+
+            // Renderizar las tablas necesarias
+            let tablesHTML = '';
+            let monthlyHTML = '';
+            let weeklyHTML = '';
+
+            if (showMonthly) {
+                let catAggMonth = {};
+                TODAS_LAS_CATEGORIAS.forEach(c => { catAggMonth[c] = { categoria: c, mayo: 0, junio: 0, julio: 0, agosto: 0, total: 0 }; });
+
+                dataRaw.forEach(d => {
+                    let m = parseInt(d.semana.split('/')[1]);
+                    if (!catAggMonth[d.categoria]) catAggMonth[d.categoria] = { categoria: d.categoria, mayo: 0, junio: 0, julio: 0, agosto: 0, total: 0 };
+                    
+                    let monthTotal = d.total;
+                    if (m === 5) catAggMonth[d.categoria].mayo += monthTotal;
+                    else if (m === 6) catAggMonth[d.categoria].junio += monthTotal;
+                    else if (m === 7) catAggMonth[d.categoria].julio += monthTotal;
+                    else if (m === 8) catAggMonth[d.categoria].agosto += monthTotal;
+                    
+                    catAggMonth[d.categoria].total += monthTotal;
+                });
+
+                let sumMayo = 0, sumJunio = 0, sumJulio = 0, sumAgosto = 0, totalHorasMonth = 0;
+                Object.values(catAggMonth).forEach(d => {
+                    sumMayo += d.mayo; sumJunio += d.junio; sumJulio += d.julio; sumAgosto += d.agosto;
+                    totalHorasMonth += d.total;
+                });
+
+                let dataMonthlyRender = isSummary ? TODAS_LAS_CATEGORIAS.map(c => catAggMonth[c]) : Object.values(catAggMonth).filter(c => c.total > 0);
+                
+                dataMonthlyRender.sort((a, b) => {
+                    let key = sortState.monthly.key;
+                    let dir = sortState.monthly.dir;
+                    let valA = a[key], valB = b[key];
+                    if (key === 'categoria') {
+                        if (valA < valB) return dir === 'asc' ? -1 : 1;
+                        if (valA > valB) return dir === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+                    return dir === 'asc' ? valA - valB : valB - valA;
+                });
+
+                let rowsHtml = '';
+                dataMonthlyRender.forEach(d => {
+                    const color = COLORES_CATEGORIA[d.categoria] || '#94a3b8';
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${color};"></span><span class="font-bold text-slate-800">${d.categoria}</span></div></td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.mayo > 0 ? d.mayo : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.junio > 0 ? d.junio : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.julio > 0 ? d.julio : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.agosto > 0 ? d.agosto : '0'}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-900 bg-slate-50">${d.total}</td>
+                        </tr>
+                    `;
+                });
+
+                monthlyHTML = `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 w-full mt-6">
+                        <div class="mb-6 text-left">
+                            <h3 class="text-xl font-bold text-slate-900">Informe Mensual por Categoría</h3>
+                            <p class="text-slate-500 text-sm mt-1">Consolidado mensual de los últimos 4 meses.</p>
+                        </div>
+                        <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-100">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold select-none">
+                                    <tr>
+                                        ${renderSortableTh('Categoría', 'categoria', 'monthly', 'w-4/12', 'text-left px-6')}
+                                        ${renderSortableTh('Mayo', 'mayo', 'monthly')}
+                                        ${renderSortableTh('Junio', 'junio', 'monthly')}
+                                        ${renderSortableTh('Julio', 'julio', 'monthly')}
+                                        ${renderSortableTh('Agosto', 'agosto', 'monthly')}
+                                        ${renderSortableTh('Total Horas', 'total', 'monthly', '', 'text-center', 'text-blue-800 bg-blue-50/50')}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">${rowsHtml}</tbody>
+                                <tfoot class="bg-slate-50 border-t border-slate-200 font-bold text-slate-800">
+                                    <tr>
+                                        <td class="px-6 py-4 text-center uppercase tracking-wider">Total invertido</td>
+                                        <td class="px-3 py-4 text-center">${sumMayo}</td>
+                                        <td class="px-3 py-4 text-center">${sumJunio}</td>
+                                        <td class="px-3 py-4 text-center">${sumJulio}</td>
+                                        <td class="px-3 py-4 text-center">${sumAgosto}</td>
+                                        <td class="px-6 py-4 text-center text-slate-800 bg-slate-100 text-base">${totalHorasMonth}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (showWeekly) {
+                let catAggWeek = {};
+                TODAS_LAS_CATEGORIAS.forEach(c => { catAggWeek[c] = { categoria: c, L: 0, M: 0, X: 0, J: 0, V: 0, total: 0 }; });
+
+                dataRaw.forEach(d => {
+                    if (!catAggWeek[d.categoria]) catAggWeek[d.categoria] = { categoria: d.categoria, L: 0, M: 0, X: 0, J: 0, V: 0, total: 0 };
+                    catAggWeek[d.categoria].L += d.L;
+                    catAggWeek[d.categoria].M += d.M;
+                    catAggWeek[d.categoria].X += d.X;
+                    catAggWeek[d.categoria].J += d.J;
+                    catAggWeek[d.categoria].V += d.V;
+                    catAggWeek[d.categoria].total += d.total;
+                });
+
+                let sumL = 0, sumM = 0, sumX = 0, sumJ = 0, sumV = 0, totalHorasWeek = 0;
+                Object.values(catAggWeek).forEach(d => {
+                    sumL += d.L; sumM += d.M; sumX += d.X; sumJ += d.J; sumV += d.V;
+                    totalHorasWeek += d.total;
+                });
+
+                let dataWeeklyRender = isSummary ? TODAS_LAS_CATEGORIAS.map(c => catAggWeek[c]) : Object.values(catAggWeek).filter(c => c.total > 0);
+
+                dataWeeklyRender.sort((a, b) => {
+                    let key = sortState.weekly.key;
+                    let dir = sortState.weekly.dir;
+                    let valA = a[key], valB = b[key];
+                    if (key === 'categoria') {
+                        if (valA < valB) return dir === 'asc' ? -1 : 1;
+                        if (valA > valB) return dir === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+                    return dir === 'asc' ? valA - valB : valB - valA;
+                });
+
+                let rowsHtml = '';
+                dataWeeklyRender.forEach(d => {
+                    const color = COLORES_CATEGORIA[d.categoria] || '#94a3b8';
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="px-6 py-4"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${color};"></span><span class="font-bold text-slate-800">${d.categoria}</span></div></td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.L > 0 ? d.L : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.M > 0 ? d.M : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.X > 0 ? d.X : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.J > 0 ? d.J : '0'}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${d.V > 0 ? d.V : '0'}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-900 bg-slate-50">${d.total}</td>
+                        </tr>
+                    `;
+                });
+
+                weeklyHTML = `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 w-full mt-6">
+                        <div class="mb-6 text-left">
+                            <h3 class="text-xl font-bold text-slate-900">Informe Semanal por Categoría</h3>
+                            <p class="text-slate-500 text-sm mt-1">Registro de horas distribuidas por día de la semana.</p>
+                        </div>
+                        <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-100">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead class="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold select-none">
+                                    <tr>
+                                        ${renderSortableTh('Categoría', 'categoria', 'weekly', 'w-4/12', 'text-left px-6')}
+                                        ${renderSortableTh('Lunes', 'L', 'weekly')}
+                                        ${renderSortableTh('Martes', 'M', 'weekly')}
+                                        ${renderSortableTh('Miércoles', 'X', 'weekly')}
+                                        ${renderSortableTh('Jueves', 'J', 'weekly')}
+                                        ${renderSortableTh('Viernes', 'V', 'weekly')}
+                                        ${renderSortableTh('Total Horas', 'total', 'weekly', '', 'text-center', 'text-blue-800 bg-blue-50/50')}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">${rowsHtml}</tbody>
+                                <tfoot class="bg-slate-50 border-t border-slate-200 font-bold text-slate-800">
+                                    <tr>
+                                        <td class="px-6 py-4 text-center uppercase tracking-wider">Horas diarias invertidas</td>
+                                        <td class="px-3 py-4 text-center">${sumL}</td>
+                                        <td class="px-3 py-4 text-center">${sumM}</td>
+                                        <td class="px-3 py-4 text-center">${sumX}</td>
+                                        <td class="px-3 py-4 text-center">${sumJ}</td>
+                                        <td class="px-3 py-4 text-center">${sumV}</td>
+                                        <td class="px-6 py-4 text-center text-slate-800 bg-slate-100 text-base">${totalHorasWeek}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            tablesHTML = weeklyHTML + monthlyHTML;
+            document.getElementById('employee-tables-container').innerHTML = tablesHTML;
+
+            if (animate) {
+                const container = document.getElementById('employee-view-container');
+                container.classList.remove('animate-fade-in');
+                void container.offsetWidth;
+                container.classList.add('animate-fade-in');
+            }
+        };
+
+        const calculateSequentialCerts = (miembro, trackedHours) => {
+            const certs = CERTIFICACIONES_EQUIPO[miembro] || [];
+            let remaining = trackedHours;
+            return certs.map(c => {
+                if (c.preCompleted) {
+                    return { name: c.name, target: c.target, current: c.target, percentage: 100, completed: true };
+                }
+                let allocated = Math.min(remaining, c.target);
+                remaining = Math.max(0, remaining - c.target);
+                let pct = Math.min(100, Math.round((allocated / c.target) * 100));
+                return { name: c.name, target: c.target, current: allocated, percentage: pct, completed: allocated >= c.target };
+            });
+        };
+
+        const renderPDData = (miembroID) => {
+            const isSummary = (miembroID === 'ALL');
+            const container = document.getElementById('pd-dynamic-content');
+            container.innerHTML = '';
+
+            let pdAgg = {};
+            const miembros = [...new Set(database.map(d => d.miembro))].sort();
+            miembros.forEach(m => pdAgg[m] = 0);
+
+            database.filter(d => d.categoria === 'Plan de Desarrollo').forEach(d => {
+                if(pdAgg[d.miembro] !== undefined) pdAgg[d.miembro] += d.total;
+            });
+
+            if (isSummary) {
+                let planDetalleHTML = `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 w-full space-y-4">
+                        <h3 class="text-xl font-bold text-slate-900">Detalle del Plan de Formación</h3>
+                        <p class="text-slate-500 text-sm">Objetivos de certificación asignados a cada integrante y consumo secuencial de horas acumuladas:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                `;
+                
+                miembros.forEach(m => {
+                    const totalM = pdAgg[m];
+                    const breakdown = calculateSequentialCerts(m, totalM);
+                    
+                    planDetalleHTML += `
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-slate-800 text-base">${m}</span>
+                                <span class="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg">Total Reportado: ${totalM} hrs</span>
+                            </div>
+                            <ul class="text-xs text-slate-600 space-y-1 pt-1">
+                    `;
+                    breakdown.forEach(b => {
+                        planDetalleHTML += `
+                            <li class="flex justify-between items-center py-1 border-b border-slate-200/60 last:border-0">
+                                <span class="font-medium">• ${b.name}</span>
+                                <span class="font-bold text-slate-700">${b.current}/${b.target}h <span class="text-slate-400 font-medium">(${b.percentage}%)</span></span>
+                            </li>
+                        `;
+                    });
+                    planDetalleHTML += `</ul></div>`;
+                });
+                planDetalleHTML += `</div></div>`;
+                container.innerHTML += planDetalleHTML;
+
+                let tableRowsHTML = '';
+                miembros.forEach(m => {
+                    const totalReportado = pdAgg[m];
+                    const breakdown = calculateSequentialCerts(m, totalReportado);
+                    
+                    const totalCerts = breakdown.length;
+                    const sumPercentages = breakdown.reduce((acc, b) => acc + b.percentage, 0);
+                    const pct = totalCerts > 0 ? (sumPercentages / totalCerts) : 0;
+
+                    tableRowsHTML += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 font-bold text-slate-800">${m}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-600">${totalReportado} hrs</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                        <div class="bg-indigo-500 h-2 rounded-full" style="width: ${pct}%"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-500 w-10 text-right">${pct.toFixed(1)}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 w-full">
+                        <div class="mb-6 text-left">
+                            <h3 class="text-xl font-bold text-slate-900">Consolidado de Formación</h3>
+                            <p class="text-slate-500 text-sm mt-1">Suma total de horas reportadas por cada integrante. <span class="font-bold text-slate-700">Datos al 24 de agosto de 2026</span>.</p>
+                        </div>
+                        <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-100">
+                            <table class="w-full text-left border-collapse min-w-[500px]">
+                               <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
+                                        <th class="px-6 py-4">Miembro del Equipo</th>
+                                        <th class="px-6 py-4 text-center">Horas de Formación Reportadas</th>
+                                        <th class="px-6 py-4 w-1/2">Barra de Progreso General</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    ${tableRowsHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+            } else {
+                const totalM = pdAgg[miembroID] || 0;
+                const breakdown = calculateSequentialCerts(miembroID, totalM);
+                
+                let certsCardsHTML = `<div class="grid grid-cols-1 gap-4">`;
+                breakdown.forEach(b => {
+                    certsCardsHTML += `
+                        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-800 text-lg">${b.name}</h4>
+                                <span class="text-xs font-bold px-3 py-1 rounded-xl ${b.completed ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">
+                                    ${b.completed ? 'Completado / Meta Alcanzada' : 'En Progreso'}
+                                </span>
+                            </div>
+                            <div class="flex justify-between text-sm text-slate-600 font-medium">
+                                <span>Progreso de la certificación:</span>
+                                <span class="font-bold text-slate-900">${b.current}/${b.target}h <span class="text-slate-400 font-medium">(${b.percentage}%)</span></span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                                <div class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: ${b.percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                certsCardsHTML += `</div>`;
+                
+                container.innerHTML += certsCardsHTML;
+
+                const allWeeks = [...new Set(database.map(d => d.semana))].sort((a,b) => {
+                    let pa = a.split('/'); let pb = b.split('/');
+                    return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]);
+                });
+
+                let weeklyTableRows = '';
+                allWeeks.forEach(w => {
+                    const weekData = database.filter(d => d.semana === w && d.miembro === miembroID && d.categoria === 'Plan de Desarrollo');
+                    const totalInWeek = weekData.reduce((acc, curr) => acc + curr.total, 0);
+                    
+                    weeklyTableRows += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 font-bold text-slate-700">Semana ${w}</td>
+                            <td class="px-3 py-4 text-center text-slate-600">${totalInWeek} hrs</td>
+                        </tr>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 w-full space-y-4">
+                        <h3 class="text-xl font-bold text-slate-900">Gasto Semanal en Formación</h3>
+                        <p class="text-slate-500 text-sm">Desglose histórico del tiempo invertido exclusivamente en esta categoría.</p>
+                        <div class="overflow-x-auto no-scrollbar rounded-xl border border-slate-100">
+                            <table class="w-full text-left border-collapse min-w-[400px]">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
+                                        <th class="px-6 py-4">Semana</th>
+                                        <th class="px-3 py-4 text-center">Horas Invertidas</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    ${weeklyTableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const containerView = document.getElementById('pd-view-container');
+            containerView.classList.remove('animate-fade-in');
+            void containerView.offsetWidth;
+            containerView.classList.add('animate-fade-in');
+        };
+
+        window.switchMode = (mode, miembro = 'ALL') => {
+            currentMode = mode;
+            currentActiveMember = miembro;
+            
+            const empView = document.getElementById('employee-view-container');
+            const pdView = document.getElementById('pd-view-container');
+            const filtersPanel = document.getElementById('filters-panel');
+
+            // Resetear visualmente todos los botones
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors text-left mb-1";
+            });
+
+            if (mode === 'pd') {
+                empView.classList.add('hidden');
+                filtersPanel.classList.add('hidden');
+                pdView.classList.remove('hidden');
+                
+                const safeId = miembro === 'ALL' ? 'ALL' : miembro.replace(/\s+/g, '-');
+                const btnId = `btn-pd-${safeId}`;
+                const activeBtn = document.getElementById(btnId);
+                if(activeBtn) {
+                    activeBtn.className = "nav-btn w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-blue-50 text-blue-700 transition-colors text-left shadow-sm border border-blue-100 mb-1";
+                }
+
+                renderPDData(miembro);
+            } else {
+                pdView.classList.add('hidden');
+                empView.classList.remove('hidden');
+                
+                const safeId = miembro === 'ALL' ? 'ALL' : miembro.replace(/\s+/g, '-');
+                const btnId = `btn-${mode}-${safeId}`;
+                const activeBtn = document.getElementById(btnId);
+                
+                if(activeBtn) {
+                    activeBtn.className = "nav-btn w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-blue-50 text-blue-700 transition-colors text-left shadow-sm border border-blue-100 mb-1";
+                }
+
+                if (mode === 'latest') {
+                    filtersPanel.classList.add('hidden');
+                } else if (mode === 'hist') {
+                    filtersPanel.classList.remove('hidden');
+                }
+
+                renderEmployeeData(mode, miembro);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDate();
+            initFiltersAndSidebar();
+            
+            // Arrancar en Última Semana - Resumen del Equipo por defecto
+            switchMode('latest', 'ALL');
+
+            document.getElementById('filter-semana').addEventListener('change', () => {
+                if(currentMode === 'hist') {
+                    renderEmployeeData('hist', currentActiveMember);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
